@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+html, body {
+  @apply bg-gray-100 text-gray-800 min-h-screen font-sans;
+}
+
+h1, h2, h3, h4 {
+  @apply font-bold text-gray-800;
+}
+
+input, textarea, select {
+  @apply border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500;
+}
+
+/* Preview behavior: hide input-mode controls, show preview-mode */
+.input-mode { display: inline-flex; }
+.preview-mode { display: none; }
+.preview .input-mode { display: none; }
+.preview .preview-mode { display: inline-flex; }
+
+/* Disable editing while in preview */
+.preview .inline-editable,
+.preview .table-input {
+  border-color: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  pointer-events: none;
+}
+.preview input,
+.preview textarea,
+.preview select {
+  pointer-events: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
