@@ -1,14 +1,15 @@
 import type { Linter } from "eslint";
+import js from "@eslint/js";
 import nextPlugin from "@next/eslint-plugin-next";
 
-const config: Linter.Config = {
-  extends: ["next/core-web-vitals", "eslint:recommended"],
-  plugins: {
-    "@next/next": nextPlugin,
+export default [
+  js.configs.recommended,
+  {
+    plugins: {
+      "@next/next": nextPlugin,
+    },
+    rules: {
+      "@next/next/no-html-link-for-pages": "off",
+    },
   },
-  rules: {
-    "@next/next/no-html-link-for-pages": "off",
-  },
-};
-
-export default config;
+] satisfies Linter.FlatConfig[];
