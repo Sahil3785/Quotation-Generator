@@ -37,6 +37,12 @@ export default function QuotationPage() {
   // Add New Client Modal
   const [clientModalOpen, setClientModalOpen] = useState(false);
 
+  // Ship To editable address fields
+  const [shipToAddress, setShipToAddress] = useState("");
+  const [shipToCity, setShipToCity] = useState("");
+  const [shipToState, setShipToState] = useState("");
+  const [shipToZip, setShipToZip] = useState("");
+
   useEffect(() => {
     async function loadData() {
       // set dates
@@ -77,6 +83,24 @@ export default function QuotationPage() {
     loadData();
   }, []);
 
+  // Prefill shipping address from selected client if available
+  useEffect(() => {
+    const client = clients.find((cl) => cl.id === selectedClient);
+    const existing: string = (client?.fields?.["Shipping Address"] || "").toString();
+    if (existing) {
+      const parts = existing.split(',').map((p: string) => p.trim()).filter(Boolean);
+      setShipToAddress(parts[0] || "");
+      setShipToCity(parts[1] || "");
+      setShipToState(parts[2] || "");
+      setShipToZip(parts[3] || "");
+    } else {
+      setShipToAddress("");
+      setShipToCity("");
+      setShipToState("");
+      setShipToZip("");
+    }
+  }, [selectedClient, clients]);
+
   const handleGenerateAndSave = async () => {
     // Require Created By selection before proceeding
     if (!createdBy) {
@@ -111,6 +135,20 @@ export default function QuotationPage() {
       const created = await createAirtableRecord(process.env.NEXT_PUBLIC_AIRTABLE_QUOTATIONS_TABLE!, fields);
       const recordId = created?.id as string;
       if (!recordId) throw new Error('Airtable did not return a record id. Verify table name and field schema.');
+
+      // Update selected client's Shipping Address (non-blocking)
+      try {
+        if (selectedClient) {
+          const parts = [shipToAddress, shipToCity, shipToState, shipToZip]
+            .map(s => (s || '').trim()).filter(Boolean);
+          const shippingAddress = parts.join(', ');
+          await updateAirtableRecord(process.env.NEXT_PUBLIC_AIRTABLE_CLIENTS_TABLE!, selectedClient, {
+            "Shipping Address": shippingAddress,
+          });
+        }
+      } catch (e) {
+        console.warn('Failed to update client Shipping Address:', e);
+      }
 
       // 2) Toggle preview for clean PDF
       setPreview(true);
@@ -162,12 +200,12 @@ export default function QuotationPage() {
     <main id="main-container" className={`container mx-auto max-w-7xl p-4 sm:p-8 ${preview ? 'preview' : ''}`}>
       <div id="quotation-content" className="bg-white rounded-xl shadow-2xl p-6 sm:p-10">
         <header className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-800 mb-4 text-center w-48 mx-auto">Quotation</h1>
           <div className="flex flex-col sm:flex-row justify-between items-start gap-6">
             <div className="flex-shrink-0">
-              <img src="https://placehold.co/192x70/e2e8f0/64748b?text=Your+Logo" alt="Logo" className="w-48 h-auto" />
+              <img src="/suprans-logo.png" alt="Suprans Logo" className="w-48 h-auto" />
             </div>
             <div className="w-full sm:w-auto sm:max-w-md">
-              <h1 className="text-4xl font-bold text-gray-800 mb-4">Quotation</h1>
               <div className="grid grid-cols-2 gap-x-4 gap-y-2" id="invoice-details">
                 <label className="font-semibold text-gray-600">Quotation No*</label>
                 <input type="text" id="quotation-no" className="inline-editable text-gray-800" value={quotationNo} readOnly />
@@ -198,12 +236,11 @@ export default function QuotationPage() {
           <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
             <h3 className="text-lg font-bold text-gray-800 mb-4">Billed By</h3>
             <div id="billed-by-details" className="space-y-2 text-gray-700">
-              <p className="font-semibold text-lg">Your Company Name</p>
-              <p>123 Your Street</p>
-              <p>Your City, State, ZIP</p>
-              <p>Email: contact@yourcompany.com</p>
-              <p>PAN: YOURPANNO</p>
-              <p>GSTIN: YOURGSTIN</p>
+              <p className="font-semibold text-lg">STARTUP SQUAD PRIVATE LIMITED</p>
+              <p>4319, NEAR HARYANA ACHAAR FACTORY, Shukarpura</p>
+              <p>Rewari, Haryana, 123401</p>
+              <p>Email: imports@suprans.in</p>
+              <p>GSTIN: 06ABPCS1109K1Z6 </p>
             </div>
           </div>
           <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
@@ -238,20 +275,55 @@ export default function QuotationPage() {
           <div>
             <h4 className="text-md font-bold text-gray-800 mb-4">Shipped From</h4>
             <div id="shipped-from-details" className="space-y-3">
-              <p className="table-input bg-gray-100">Your Warehouse Name</p>
-              <p className="table-input bg-gray-100">456 Warehouse Ave</p>
-              <p className="table-input bg-gray-100">Warehouse City, State</p>
-              <p className="table-input bg-gray-100">WH-ZIP</p>
+              <p className="table-input bg-gray-100">STARTUP SQUAD PRIVATE LIMITED</p>
+              <p className="table-input bg-gray-100">4319, NEAR HARYANA ACHAAR FACTORY, Shukarpura</p>
+              <p className="table-input bg-gray-100">Rewari, Haryana</p>
+              <p className="table-input bg-gray-100">123401</p>
             </div>
           </div>
           <div>
             <h4 className="text-md font-bold text-gray-800 mb-4">Shipped To</h4>
             <div className="space-y-3">
-              <input type="text" id="ship-to-name" placeholder="Client's business name" className="table-input" />
-              <input type="text" id="ship-to-address" placeholder="Address (optional)" className="table-input" />
-              <input type="text" id="ship-to-city" placeholder="City (optional)" className="table-input" />
-              <input type="text" id="ship-to-state" placeholder="State (optional)" className="table-input" />
-              <input type="text" id="ship-to-zip" placeholder="Postal Code / ZIP Code" className="table-input" />
+              <input
+                type="text"
+                id="ship-to-name"
+                readOnly
+                value={(selectedClient ? (clients.find(c => c.id === selectedClient)?.fields["Client Name"] || '') : '')}
+                placeholder="Client's business name"
+                className="table-input bg-gray-100"
+              />
+              <input
+                type="text"
+                id="ship-to-address"
+                placeholder="Address (optional)"
+                className="table-input"
+                value={shipToAddress}
+                onChange={(e) => setShipToAddress(e.target.value)}
+              />
+              <input
+                type="text"
+                id="ship-to-city"
+                placeholder="City (optional)"
+                className="table-input"
+                value={shipToCity}
+                onChange={(e) => setShipToCity(e.target.value)}
+              />
+              <input
+                type="text"
+                id="ship-to-state"
+                placeholder="State (optional)"
+                className="table-input"
+                value={shipToState}
+                onChange={(e) => setShipToState(e.target.value)}
+              />
+              <input
+                type="text"
+                id="ship-to-zip"
+                placeholder="Postal Code / ZIP Code"
+                className="table-input"
+                value={shipToZip}
+                onChange={(e) => setShipToZip(e.target.value)}
+              />
             </div>
           </div>
         </section>
@@ -469,6 +541,18 @@ export default function QuotationPage() {
               Share Quotation
             </button>
             <span id="share-success-msg" className={`ml-4 text-green-600 ${shareMsgVisible ? '' : 'hidden'}`}>Link Copied!</span>
+            <button
+              id="create-new-quotation-btn"
+              className="bg-green-600 text-white py-3 px-10 rounded-lg shadow-lg hover:bg-green-700 transition duration-200 text-lg font-semibold ml-4"
+              onClick={() => {
+                // Reload the page to reset all component state and start a fresh quotation
+                if (typeof window !== 'undefined') {
+                  window.location.reload();
+                }
+              }}
+            >
+              Create New Quotation
+            </button>
           </>
         )}
       </footer>
