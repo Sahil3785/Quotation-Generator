@@ -1,63 +1,40 @@
-const API_KEY = process.env.NEXT_PUBLIC_AIRTABLE_API_KEY!;
-const BASE_ID = process.env.NEXT_PUBLIC_AIRTABLE_BASE_ID!;
-const CLIENTS_TABLE = process.env.NEXT_PUBLIC_AIRTABLE_CLIENTS_TABLE!;
-const PRODUCTS_TABLE = process.env.NEXT_PUBLIC_AIRTABLE_PRODUCTS_TABLE!;
-const QUOTATIONS_TABLE = process.env.NEXT_PUBLIC_AIRTABLE_QUOTATIONS_TABLE!;
-const TEAM_TABLE = process.env.NEXT_PUBLIC_AIRTABLE_TEAM_TABLE!;
-
-const headers = {
-  Authorization: `Bearer ${API_KEY}`,
-  "Content-Type": "application/json",
-};
+// Client-side safe wrappers that call server API routes.
+// This ensures Airtable API key stays server-side only.
 
 export async function fetchAirtableData(table: string) {
-  const encoded = encodeURIComponent(table);
-  const res = await fetch(`https://api.airtable.com/v0/${BASE_ID}/${encoded}`, {
-    headers,
-    cache: "no-store",
+  const res = await fetch(`/api/airtable/fetch`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ table }),
   });
-
-  if (!res.ok) throw new Error("Failed to fetch from Airtable");
+  if (!res.ok) throw new Error(await res.text());
   const data = await res.json();
   return data.records || [];
 }
 
 export async function createAirtableRecord(table: string, fields: Record<string, any>) {
-  const encoded = encodeURIComponent(table);
-  const res = await fetch(`https://api.airtable.com/v0/${BASE_ID}/${encoded}`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({ fields }),
+  const res = await fetch(`/api/airtable/create`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ table, fields }),
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data?.error?.message || 'Airtable create failed');
-  return data;
+  if (!res.ok) throw new Error(await res.text());
+  return await res.json();
 }
 
 export async function updateAirtableRecord(table: string, recordId: string, fields: Record<string, any>) {
-  const encoded = encodeURIComponent(table);
-  const res = await fetch(`https://api.airtable.com/v0/${BASE_ID}/${encoded}/${recordId}`, {
-    method: "PATCH",
-    headers,
-    body: JSON.stringify({ fields }),
+  const res = await fetch(`/api/airtable/update`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ table, recordId, fields }),
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data?.error?.message || 'Airtable update failed');
-  return data;
+  if (!res.ok) throw new Error(await res.text());
+  return await res.json();
 }
 
 export async function getNextQuotationId(quotationsTable: string) {
-  const url = `https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent(quotationsTable)}?maxRecords=1&sort%5B0%5D%5Bfield%5D=Quotation%20ID&sort%5B0%5D%5Bdirection%5D=desc&fields%5B%5D=Quotation%20ID`;
-  const res = await fetch(url, { headers });
-  if (!res.ok) throw new Error('Failed to fetch last quotation id');
+  const res = await fetch(`/api/airtable/next-id?table=${encodeURIComponent(quotationsTable)}`, { cache: 'no-store' });
+  if (!res.ok) throw new Error(await res.text());
   const data = await res.json();
-  let newQuotationNumber = 'Q-00001';
-  if (data.records && data.records.length > 0) {
-    const lastId = data.records[0].fields['Quotation ID'] as string;
-    if (lastId) {
-      const lastNum = parseInt(lastId.split('-')[1]);
-      if (!isNaN(lastNum)) newQuotationNumber = `Q-${String(lastNum + 1).padStart(5, '0')}`;
-    }
-  }
-  return newQuotationNumber;
+  return data.nextId as string;
 }

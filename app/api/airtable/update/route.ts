@@ -1,0 +1,30 @@
+import { NextRequest, NextResponse } from 'next/server';
+
+export async function POST(req: NextRequest) {
+  const { table, recordId, fields } = await req.json();
+  const API_KEY = process.env.AIRTABLE_API_KEY as string | undefined;
+  const BASE_ID = process.env.NEXT_PUBLIC_AIRTABLE_BASE_ID as string | undefined;
+  if (!API_KEY || !BASE_ID || !table || !recordId) {
+    const missing = [
+      !API_KEY ? 'AIRTABLE_API_KEY' : null,
+      !BASE_ID ? 'NEXT_PUBLIC_AIRTABLE_BASE_ID' : null,
+      !table ? 'table' : null,
+      !recordId ? 'recordId' : null,
+    ].filter(Boolean);
+    return NextResponse.json({ error: 'Missing configuration, table name, or recordId', missing }, { status: 400 });
+  }
+  const headers = {
+    Authorization: `Bearer ${API_KEY}`,
+    'Content-Type': 'application/json',
+  } as const;
+  const encoded = encodeURIComponent(String(table));
+  const url = `https://api.airtable.com/v0/${BASE_ID}/${encoded}/${encodeURIComponent(String(recordId))}`;
+  const res = await fetch(url, { method: 'PATCH', headers, body: JSON.stringify({ fields }) });
+  const data = await res.json();
+  if (!res.ok) {
+    return NextResponse.json({ error: data?.error?.message || 'Airtable update failed' }, { status: res.status });
+  }
+  return NextResponse.json(data);
+}
+
+
