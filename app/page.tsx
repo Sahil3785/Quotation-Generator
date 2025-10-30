@@ -45,11 +45,17 @@ export default function QuotationPage() {
 
   useEffect(() => {
     async function loadData() {
-      // set dates
+      // set dates (use LOCAL date, not UTC, to avoid off-by-one)
+      const formatLocalYMD = (d: Date) => {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+      };
       const today = new Date();
-      const todayStr = today.toISOString().split('T')[0];
+      const todayStr = formatLocalYMD(today);
       const dd = new Date(today); dd.setDate(today.getDate() + 2);
-      const dueStr = dd.toISOString().split('T')[0];
+      const dueStr = formatLocalYMD(dd);
       setQuotationDate(todayStr);
       setDueDate(dueStr);
 
