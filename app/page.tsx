@@ -404,30 +404,30 @@ export default function QuotationPage() {
                 <h4 className="text-md font-bold text-gray-800 mb-2">UPI / QR Code</h4>
                 <div>
                   <label className="block text-sm font-medium text-gray-600">UPI ID</label>
-                  <p id="payment-upi-id" className="table-input bg-gray-100">your-upi-id@okhdfcbank</p>
+                  <p id="payment-upi-id" className="table-input bg-gray-100">startupsquad@ybl</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-600">Upload UPI QR Code</label>
-                  <img id="qr-code-preview" src="https://placehold.co/128x128/e2e8f0/e2e8f0?text=QR" alt="QR Code Preview" className="mt-2 w-32 h-32 object-cover rounded-md border border-gray-300" />
+                  <img id="qr-code-preview" src="/QR Code.png" alt="QR Code Preview" className="mt-2 w-32 h-32 object-cover rounded-md border border-gray-300" />
                 </div>
               </div>
               <div className="space-y-3 avoid-page-break">
                 <h4 className="text-md font-bold text-gray-800 mb-2">Bank Account Details</h4>
                 <div>
                   <label className="block text-sm font-medium text-gray-600">Account Name</label>
-                  <p id="payment-bank-name" className="table-input bg-gray-100">Your Company Name</p>
+                  <p id="payment-bank-name" className="table-input bg-gray-100">STARTUP SQUAD PRIVATE LIMITED</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-600">Account Number</label>
-                  <p id="payment-bank-acc" className="table-input bg-gray-100">1234567890</p>
+                  <p id="payment-bank-acc" className="table-input bg-gray-100">9306566900</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-600">Bank Name</label>
-                  <p id="payment-bank-bank" className="table-input bg-gray-100">HDFC Bank</p>
+                  <p id="payment-bank-bank" className="table-input bg-gray-100">Kotak Mahindra Bank</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-600">IFSC Code</label>
-                  <p id="payment-bank-ifsc" className="table-input bg-gray-100">HDFC0000123</p>
+                  <p id="payment-bank-ifsc" className="table-input bg-gray-100">KKBK0004354</p>
                 </div>
               </div>
 
